@@ -8,7 +8,7 @@ import { Id } from "@/convex/_generated/dataModel";
 
 type ProductsOptionsProps = {
   productId: Id<"products">;
-  userId: string | undefined;
+  userId: Id<"users">;
 };
 
 const ProductsOptions = ({ userId, productId }: ProductsOptionsProps) => {
