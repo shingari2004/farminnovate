@@ -59,7 +59,7 @@ const Wishlist = () => {
               </span>
             </div>
             <div className="col-span-1 text-center">
-              {formatPrice(item.product?.price)}
+              {formatPrice(item.product?.price!)}
             </div>
             <div className="col-span-1 text-center">
               <button
