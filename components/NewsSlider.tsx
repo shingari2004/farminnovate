@@ -11,6 +11,13 @@ interface NewsItem {
   url: string;
 }
 
+interface Article {
+  title?: string;
+  description?: string;
+  urlToImage?: string;
+  url?: string;
+}
+
 const NewsSlider = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [current, setCurrent] = useState(0);
@@ -30,7 +37,7 @@ const NewsSlider = () => {
         // Select the first 4 articles
         const selectedArticles = shuffledArticles
           .slice(0, 6)
-          .map((article: any, i: number) => ({
+          .map((article: Article, i: number) => ({
             id: i,
             title: article.title || "No title",
             description: article.description || "No description",

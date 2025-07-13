@@ -1,4 +1,3 @@
-import Image from "next/image";
 import LeftImagePortion from "@/components/LeftImagePortion";
 
 export default function AuthLayout({

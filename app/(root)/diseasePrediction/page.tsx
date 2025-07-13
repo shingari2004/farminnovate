@@ -102,6 +102,7 @@ const DiseasePrediction: React.FC = () => {
         data = JSON.parse(responseText);
       } catch (parseError) {
         // If JSON parsing fails, try to fix common issues
+        console.log(parseError);
         console.warn('JSON parsing failed, attempting to fix:', responseText);
         
         // Replace NaN with 0 or null
@@ -110,6 +111,7 @@ const DiseasePrediction: React.FC = () => {
         try {
           data = JSON.parse(fixedText);
         } catch (secondParseError) {
+          console.log(secondParseError);
           console.error('Failed to parse response even after fixing:', fixedText);
           throw new Error(`Invalid response format from server: ${responseText}`);
         }

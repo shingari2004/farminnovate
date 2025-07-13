@@ -46,7 +46,7 @@ export default function CheckoutPage() {
         name: user?.fullName,
         description: "test",
         order_id: data.orderId,
-        handler: function (response: any) {
+        handler: function (response: string) {
           console.log("Payment successful", response);
         },
         prefill: {
@@ -57,7 +57,7 @@ export default function CheckoutPage() {
           color: "#006045",
         },
       };
-      const rzp1 = new window.Razorpay(options);
+      const rzp1 = new (window as any).Razorpay(options);
       rzp1.open();
     } catch (error) {
       console.error("payment failed", error);

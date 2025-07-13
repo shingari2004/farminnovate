@@ -60,6 +60,7 @@ const DiseasePredictionResult: React.FC = () => {
           imageData = parsedData.image;
         }
       } catch (err) {
+        console.log(err);
         console.warn('Could not retrieve image from sessionStorage');
       }
     }
@@ -81,6 +82,7 @@ const DiseasePredictionResult: React.FC = () => {
         setError('No prediction data found');
       }
     } catch (err) {
+      console.log(err);
       setError('Failed to load prediction data');
     }
     setLoading(false);

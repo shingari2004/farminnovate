@@ -2,21 +2,6 @@
 
 import React, { useState } from 'react';
 
-const translations = {
-  en: {
-    label: 'Enter your name',
-    placeholder: 'EN',
-  },
-  hi: {
-    label: 'अपना नाम दर्ज करें',
-    placeholder: 'HIN',
-  },
-  pun: {
-    label: 'Ingresa tu nombre',
-    placeholder: 'PUN',
-  },
-};
-
 const LanguageInput = () => {
   const [language, setLanguage] = useState<'en' | 'hi' | 'es'>('en');
 
