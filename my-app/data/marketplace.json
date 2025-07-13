@@ -1,0 +1,24 @@
+{
+  "fruits": {
+    "1001": {
+      "name": "Smartphone X",
+      "price": 799.99,
+      "brand": "TechCo",
+      "description": "A high-end smartphone."
+    },
+    "1002": {
+      "name": "Laptop Pro",
+      "price": 1299.99,
+      "brand": "CompEdge",
+      "description": "A powerful laptop."
+    }
+  },
+  "cereal": {
+    "2001": {
+      "name": "T-shirt",
+      "price": 19.99,
+      "brand": "StyleCo",
+      "description": "A comfy cotton T-shirt."
+    }
+  }
+}
