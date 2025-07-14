@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Camera, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, Camera, AlertCircle, Loader2, RefreshCw, ExternalLink } from 'lucide-react';
 
 interface PredictionResponse {
   result: string;
@@ -15,15 +15,47 @@ const DiseasePrediction: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected' | null>(null);
   
   const router = useRouter();
 
   // Updated with your actual Render deployment URL
   const RENDER_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://disease-detection-e8br.onrender.com';
 
+  // Test API connection
+  const testConnection = async () => {
+    setConnectionStatus('checking');
+    try {
+      const response = await fetch(`${RENDER_API_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setConnectionStatus('connected');
+        setError(null);
+      } else {
+        setConnectionStatus('disconnected');
+        setError(`API returned status: ${response.status}. Service might be starting up.`);
+      }
+    } catch (error) {
+      setConnectionStatus('disconnected');
+      console.error('Connection test failed:', error);
+      setError('Cannot connect to ML service. Please check if the service is running.');
+    }
+  };
+
   const handleFileChange = (selectedFile: File) => {
     setFile(selectedFile);
     setError(null);
+    
+    // Validate file size (10MB limit)
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      return;
+    }
     
     // Create image preview
     const reader = new FileReader();
@@ -81,47 +113,45 @@ const DiseasePrediction: React.FC = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Add additional debugging info
       console.log('Sending file:', {
         name: file.name,
         size: file.size,
         type: file.type
       });
 
-      console.log('API URL:', `${RENDER_API_URL}/predict`);
+      const apiUrl = `${RENDER_API_URL}/predict`;
+      console.log('API URL:', apiUrl);
 
-      const response = await fetch(`${RENDER_API_URL}/predict`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
-        // Remove mode and credentials for initial testing
-        // mode: 'cors',
-        // credentials: 'include',
+        // Add timeout and better error handling
+        signal: AbortSignal.timeout(30000), // 30 second timeout
       });
 
-      // Get response as text first to handle potential JSON parsing issues
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
       console.log('Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
       
       let data: PredictionResponse;
       try {
-        // Try to parse as JSON
         data = JSON.parse(responseText);
       } catch (parseError) {
-        // If JSON parsing fails, try to fix common issues
         console.log('JSON parsing error:', parseError);
-        console.warn('JSON parsing failed, attempting to fix:', responseText);
-        
-        // Replace NaN with 0 or null
         const fixedText = responseText.replace(/:\s*NaN/g, ': 0');
         
         try {
           data = JSON.parse(fixedText);
         } catch (secondParseError) {
-          console.log('Second parsing error:', secondParseError);
-          console.error('Failed to parse response even after fixing:', fixedText);
-          throw new Error(`Invalid response format from server: ${responseText}`);
+          console.error('Failed to parse response:', fixedText);
+          console.error('Second parsing error:', secondParseError);
+          throw new Error(`Invalid response format: ${responseText.substring(0, 200)}...`);
         }
       }
 
@@ -133,14 +163,7 @@ const DiseasePrediction: React.FC = () => {
         data.confidence = 0;
       }
 
-      // Check for suspicious results that might indicate backend issues
-      if (data.result === 'apple scab' && data.confidence === 0) {
-        console.warn('Suspicious result: apple scab with 0 confidence - possible backend issue');
-        setError('Model prediction issue detected. The model may not be working correctly. Please check the backend logs.');
-        return;
-      }
-
-      if (response.ok && data.result) {
+      if (data.result) {
         // Store prediction data for the result page
         const predictionData = {
           result: data.result,
@@ -148,10 +171,8 @@ const DiseasePrediction: React.FC = () => {
           image: imagePreview
         };
 
-        // Save to localStorage instead of sessionStorage for better persistence
         localStorage.setItem('predictionResult', JSON.stringify(predictionData));
 
-        // Navigate to result page with only essential parameters (no image data)
         const params = new URLSearchParams({
           result: data.result,
           confidence: data.confidence.toString()
@@ -159,21 +180,23 @@ const DiseasePrediction: React.FC = () => {
 
         router.push(`/diseasePrediction/result?${params.toString()}`);
       } else {
-        setError(data.error || `Prediction failed. Status: ${response.status}. Please try again.`);
+        setError(data.error || 'Prediction failed. Please try again.');
       }
     } catch (error) {
       console.error('Error making prediction:', error);
+      
       if (error instanceof Error) {
-        // Handle common network errors
-        if (error.message.includes('fetch')) {
-          setError('Network error. Please check if your ML service is running and accessible.');
+        if (error.name === 'TimeoutError') {
+          setError('Request timed out. The ML service might be slow or unavailable.');
         } else if (error.message.includes('Failed to fetch')) {
           setError('Connection failed. This might be due to CORS issues or the API being unavailable.');
+        } else if (error.message.includes('NetworkError')) {
+          setError('Network error. Please check your internet connection.');
         } else {
           setError(`Error: ${error.message}`);
         }
       } else {
-        setError('Network error. Please check your connection and try again.');
+        setError('Unknown error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -197,6 +220,45 @@ const DiseasePrediction: React.FC = () => {
           <p className="text-gray-600 text-lg">
             Upload an image of your plant to detect diseases using AI
           </p>
+        </div>
+
+        {/* Connection Status */}
+        <div className="mb-6 bg-white rounded-xl shadow-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${
+                connectionStatus === 'connected' ? 'bg-green-500' : 
+                connectionStatus === 'disconnected' ? 'bg-red-500' : 
+                connectionStatus === 'checking' ? 'bg-yellow-500' : 'bg-gray-400'
+              }`} />
+              <span className="text-sm font-medium">
+                ML Service Status: {
+                  connectionStatus === 'connected' ? 'Connected' : 
+                  connectionStatus === 'disconnected' ? 'Disconnected' : 
+                  connectionStatus === 'checking' ? 'Checking...' : 'Unknown'
+                }
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={testConnection}
+                disabled={connectionStatus === 'checking'}
+                className="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${connectionStatus === 'checking' ? 'animate-spin' : ''}`} />
+                Test Connection
+              </button>
+              <a
+                href={RENDER_API_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open API
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* Upload Form */}
@@ -227,7 +289,7 @@ const DiseasePrediction: React.FC = () => {
                       className="max-h-64 mx-auto rounded-lg shadow-md mb-4"
                     />
                     <p className="text-sm text-gray-600 mb-2">
-                      {file?.name}
+                      {file?.name} ({(file?.size || 0 / 1024 / 1024).toFixed(2)} MB)
                     </p>
                     <button
                       type="button"
@@ -295,6 +357,31 @@ const DiseasePrediction: React.FC = () => {
               )}
             </button>
           </div>
+        </div>
+
+        {/* Troubleshooting Tips */}
+        <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Troubleshooting Connection Issues:
+          </h2>
+          <ul className="space-y-2 text-gray-700 text-sm">
+            <li className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+              <span>Check if your ML service is running on Render</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+              <span>Verify the API URL is correct in your environment variables</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+              <span>Ensure your ML service has CORS enabled for your domain</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+              <span>Free tier services on Render may sleep after inactivity</span>
+            </li>
+          </ul>
         </div>
 
         {/* Instructions */}
