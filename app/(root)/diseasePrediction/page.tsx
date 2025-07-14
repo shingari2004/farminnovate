@@ -19,7 +19,7 @@ const DiseasePrediction: React.FC = () => {
   const router = useRouter();
 
   // Updated with your actual Render deployment URL
-  const RENDER_API_URL = process.env.NEXT_PUBLIC_RENDER_API_URL || 'https://disease-detection-e8br.onrender.com';
+  const RENDER_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://disease-detection-e8br.onrender.com';
 
   const handleFileChange = (selectedFile: File) => {
     setFile(selectedFile);
