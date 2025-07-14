@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   ArrowLeft, 
@@ -31,7 +31,18 @@ interface DiseaseInfo {
   prevention: string[];
 }
 
-const DiseasePredictionResult: React.FC = () => {
+// Loading component for Suspense fallback
+const LoadingSpinner: React.FC = () => (
+  <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+    <div className="text-center">
+      <RefreshCw className="w-8 h-8 animate-spin text-green-600 mx-auto mb-4" />
+      <p className="text-gray-600">Loading prediction results...</p>
+    </div>
+  </div>
+);
+
+// Main component that uses useSearchParams
+const DiseasePredictionResultContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [predictionData, setPredictionData] = useState<PredictionResult | null>(null);
@@ -39,55 +50,55 @@ const DiseasePredictionResult: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  // Get data from URL params first
-  const result = searchParams.get('result');
-  const confidence = searchParams.get('confidence');
-  const imageKey = searchParams.get('imageKey'); // If using Option 2C
-  
-  if (result && confidence) {
-    // Get image from sessionStorage
-    let imageData = null;
+    // Get data from URL params first
+    const result = searchParams.get('result');
+    const confidence = searchParams.get('confidence');
+    const imageKey = searchParams.get('imageKey'); // If using Option 2C
     
-    if (imageKey) {
-      // Option 2C: Get image by key
-      imageData = sessionStorage.getItem(imageKey);
+    if (result && confidence) {
+      // Get image from sessionStorage
+      let imageData = null;
+      
+      if (imageKey) {
+        // Option 2C: Get image by key
+        imageData = sessionStorage.getItem(imageKey);
+      } else {
+        // Fallback: try to get from stored prediction data
+        try {
+          const storedData = sessionStorage.getItem('predictionResult');
+          if (storedData) {
+            const parsedData = JSON.parse(storedData);
+            imageData = parsedData.image;
+          }
+        } catch (err) {
+          console.log(err);
+          console.warn('Could not retrieve image from sessionStorage');
+        }
+      }
+      
+      setPredictionData({
+        result,
+        confidence: parseFloat(confidence),
+        image: imageData || undefined
+      });
+      setLoading(false);
     } else {
-      // Fallback: try to get from stored prediction data
+      // Fallback to sessionStorage for all data
       try {
         const storedData = sessionStorage.getItem('predictionResult');
         if (storedData) {
           const parsedData = JSON.parse(storedData);
-          imageData = parsedData.image;
+          setPredictionData(parsedData);
+        } else {
+          setError('No prediction data found');
         }
       } catch (err) {
         console.log(err);
-        console.warn('Could not retrieve image from sessionStorage');
+        setError('Failed to load prediction data');
       }
+      setLoading(false);
     }
-    
-    setPredictionData({
-      result,
-      confidence: parseFloat(confidence),
-      image: imageData || undefined
-    });
-    setLoading(false);
-  } else {
-    // Fallback to sessionStorage for all data
-    try {
-      const storedData = sessionStorage.getItem('predictionResult');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setPredictionData(parsedData);
-      } else {
-        setError('No prediction data found');
-      }
-    } catch (err) {
-      console.log(err);
-      setError('Failed to load prediction data');
-    }
-    setLoading(false);
-  }
-}, [searchParams]);
+  }, [searchParams]);
 
   const getDiseaseInfo = (diseaseName: string): DiseaseInfo => {
     const isHealthy = diseaseName.toLowerCase().includes('healthy');
@@ -399,6 +410,15 @@ ${diseaseInfo.prevention.map(p => `• ${p}`).join('\n')}
         </div>
       </div>
     </div>
+  );
+};
+
+// Main component that wraps the content in Suspense
+const DiseasePredictionResult: React.FC = () => {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <DiseasePredictionResultContent />
+    </Suspense>
   );
 };
 
