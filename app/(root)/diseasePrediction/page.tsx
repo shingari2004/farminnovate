@@ -170,7 +170,7 @@ const DiseasePrediction: React.FC = () => {
       }
 
       if (response.ok && data.result) {
-        // Store only essential prediction data (no large image data)
+        // Store only essential prediction data (no image data at all)
         const predictionData = {
           result: data.result,
           confidence: data.confidence,
@@ -185,56 +185,8 @@ const DiseasePrediction: React.FC = () => {
           console.warn('Failed to store prediction data');
         }
 
-        // Store image separately if needed (with compression)
-        if (imagePreview) {
-          try {
-            // Try to store compressed image data
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            
-            img.onload = () => {
-              // Compress image to smaller size
-              const maxWidth = 300;
-              const maxHeight = 300;
-              
-              let { width, height } = img;
-              
-              if (width > height) {
-                if (width > maxWidth) {
-                  height *= maxWidth / width;
-                  width = maxWidth;
-                }
-              } else {
-                if (height > maxHeight) {
-                  width *= maxHeight / height;
-                  height = maxHeight;
-                }
-              }
-              
-              canvas.width = width;
-              canvas.height = height;
-              
-              ctx?.drawImage(img, 0, 0, width, height);
-              
-              // Convert to compressed base64
-              const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
-              
-              // Try to store compressed image
-              try {
-                localStorage.setItem('predictionImage', compressedImage);
-              } catch (err) {
-                console.warn('Could not store compressed image:', err);
-                // Store in memory as fallback
-                (window as any).predictionImage = compressedImage;
-              }
-            };
-            
-            img.src = imagePreview;
-          } catch (err) {
-            console.warn('Image compression failed:', err);
-          }
-        }
+        // Don't store image in localStorage at all - pass via URL params or recreate
+        // The result page can get the image from the URL params or ask user to re-upload if needed
 
         // Navigate to result page with only essential parameters
         const params = new URLSearchParams({
