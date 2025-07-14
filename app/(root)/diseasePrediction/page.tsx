@@ -19,7 +19,7 @@ const DiseasePrediction: React.FC = () => {
   
   const router = useRouter();
 
-  // Updated with your actual Render deployment URL
+  // Updated with your actual Render deployment URL (removed double slash)
   const RENDER_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://disease-detection-e8br.onrender.com';
 
   // Test API connection
@@ -133,7 +133,24 @@ const DiseasePrediction: React.FC = () => {
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorText = await response.text();
+          console.log('Error response:', errorText);
+          
+          // Try to parse JSON error
+          const errorData = JSON.parse(errorText);
+          if (errorData.error) {
+            errorMessage = `Server error: ${errorData.error}`;
+          } else if (errorData.message) {
+            errorMessage = `Server error: ${errorData.message}`;
+          }
+        } catch (parseError) {
+          console.log('Could not parse error response');
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const responseText = await response.text();
@@ -150,7 +167,6 @@ const DiseasePrediction: React.FC = () => {
           data = JSON.parse(fixedText);
         } catch (secondParseError) {
           console.error('Failed to parse response:', fixedText);
-          console.error('Second parsing error:', secondParseError);
           throw new Error(`Invalid response format: ${responseText.substring(0, 200)}...`);
         }
       }
