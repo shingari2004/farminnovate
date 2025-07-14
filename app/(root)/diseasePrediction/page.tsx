@@ -148,6 +148,7 @@ const DiseasePrediction: React.FC = () => {
           }
         } catch (parseError) {
           console.log('Could not parse error response');
+          console.error('Error parsing response:', parseError);
         }
         
         throw new Error(errorMessage);
@@ -167,6 +168,7 @@ const DiseasePrediction: React.FC = () => {
           data = JSON.parse(fixedText);
         } catch (secondParseError) {
           console.error('Failed to parse response:', fixedText);
+          console.error('Original response:', secondParseError);
           throw new Error(`Invalid response format: ${responseText.substring(0, 200)}...`);
         }
       }
