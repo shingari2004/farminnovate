@@ -195,6 +195,7 @@ const DiseasePrediction: React.FC = () => {
           result: data.result,
           confidence: data.confidence.toString()
         });
+        console.log('Redirecting with params:', params.toString());
 
         router.push(`/diseasePrediction/result?${params.toString()}`);
       } else {
