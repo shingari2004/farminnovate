@@ -67,35 +67,6 @@ const DiseasePrediction: React.FC = () => {
     }
   };
 
-  // Safe localStorage function with error handling
-  const safeSaveToStorage = (key: string, data: any): boolean => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-      return true;
-    } catch (error) {
-      console.warn('localStorage full, trying alternatives...');
-      
-      // Try clearing old prediction data first
-      localStorage.removeItem(key);
-      
-      try {
-        localStorage.setItem(key, JSON.stringify(data));
-        return true;
-      } catch (error2) {
-        // Fallback to sessionStorage
-        try {
-          sessionStorage.setItem(key, JSON.stringify(data));
-          return true;
-        } catch (error3) {
-          console.error('All storage methods failed, using memory storage');
-          // Store in window object as fallback
-          (window as any).predictionResult = data;
-          return true;
-        }
-      }
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
@@ -170,25 +141,17 @@ const DiseasePrediction: React.FC = () => {
       }
 
       if (response.ok && data.result) {
-        // Store only essential prediction data (no image data at all)
+        // Store prediction data for the result page
         const predictionData = {
           result: data.result,
           confidence: data.confidence,
-          fileName: file.name,
-          timestamp: Date.now()
+          image: imagePreview
         };
 
-        // Use safe storage function
-        const storageSuccess = safeSaveToStorage('predictionResult', predictionData);
-        
-        if (!storageSuccess) {
-          console.warn('Failed to store prediction data');
-        }
+        // Save to localStorage instead of sessionStorage for better persistence
+        localStorage.setItem('predictionResult', JSON.stringify(predictionData));
 
-        // Don't store image in localStorage at all - pass via URL params or recreate
-        // The result page can get the image from the URL params or ask user to re-upload if needed
-
-        // Navigate to result page with only essential parameters
+        // Navigate to result page with only essential parameters (no image data)
         const params = new URLSearchParams({
           result: data.result,
           confidence: data.confidence.toString()
