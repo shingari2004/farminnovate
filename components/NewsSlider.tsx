@@ -21,38 +21,20 @@ interface Article {
 const NewsSlider = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const API_KEY_2 = "fed7e829a4b540afb735ad68e862aa47"; // Replace with your NewsAPI key
+  // Fetch and update live agriculture news
+  const NEWS_API_URL = `https://newsapi.org/v2/everything?q=agriculture+india&apiKey=${API_KEY_2}`;
 
   useEffect(() => {
-    let fetchInterval: NodeJS.Timeout;
-
     const fetchNews = async () => {
       try {
-        setError(null);
-        
-        // Call your Next.js API route instead of external API
-        const res = await fetch('/api/news');
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
+        const res = await fetch(NEWS_API_URL);
         const data = await res.json();
 
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        // Handle the case where no articles are returned
-        if (!data.articles || data.articles.length === 0) {
-          throw new Error('No articles found');
-        }
-
-        // Map your API data structure here
+        // Map your API data structure here (example for NewsAPI.org)
         const shuffledArticles = data.articles.sort(() => 0.5 - Math.random()); 
 
-        // Select the first 6 articles
+        // Select the first 4 articles
         const selectedArticles = shuffledArticles
           .slice(0, 6)
           .map((article: Article, i: number) => ({
@@ -66,72 +48,27 @@ const NewsSlider = () => {
           }));
 
         setNews(selectedArticles);
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching news:", error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch news');
-        setLoading(false);
       }
     };
 
-    // Initial fetch
     fetchNews();
-    
-    // Set up interval for periodic updates (every 30 seconds)
-    fetchInterval = setInterval(fetchNews, 30000);
-
-    // Cleanup function
-    return () => {
-      if (fetchInterval) {
-        clearInterval(fetchInterval);
-      }
-    };
+    setInterval(fetchNews , 30000);
   }, []);
 
-  // Slider auto-advance effect
   useEffect(() => {
     if (news.length === 0) return;
 
-    const slideInterval = setInterval(() => {
+    const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % news.length);
     }, 5000);
 
-    return () => clearInterval(slideInterval);
+    return () => clearInterval(interval);
   }, [news]);
 
-  // Loading state
-  if (loading) {
-    return <FullScreenLoader />;
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading News</h2>
-          <p className="text-gray-600">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // No news state
   if (news.length === 0) {
-    return (
-      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-600 mb-2">No News Available</h2>
-          <p className="text-gray-500">Unable to load agriculture news at this time.</p>
-        </div>
-      </div>
-    );
+    return <FullScreenLoader/>;
   }
 
   return (
@@ -146,10 +83,10 @@ const NewsSlider = () => {
           `}
         >
           {/* Left side content */}
-          <div className="w-1/2 bg-white p-12 flex flex-col justify-between">
+          <div className="w-1/2 bg-white  p-12 flex flex-col justify-between">
             <div>
-              <h1 className="text-xl font-bold pb-6 line-clamp-3">{slide.title}</h1>
-              <p className="pb-8 line-clamp-4 text-gray-600">{slide.description}</p>
+              <h1 className="text-xl font-bold pb-6">{slide.title}</h1>
+              <p className="pb-8">{slide.description}</p>
             </div>
             <div>
               <a
@@ -165,24 +102,11 @@ const NewsSlider = () => {
 
           {/* Right side image */}
           <div
-            className="w-1/2 bg-cover bg-center bg-gray-200"
+            className="w-1/2 bg-cover bg-center"
             style={{ backgroundImage: `url(${slide.imageUrl})` }}
           />
         </div>
       ))}
-      
-      {/* Navigation dots */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {news.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrent(index)}
-            className={`w-3 h-3 rounded-full transition-colors ${
-              index === current ? 'bg-amber-700' : 'bg-gray-300'
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 };

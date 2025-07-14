@@ -67,35 +67,6 @@ const DiseasePrediction: React.FC = () => {
     }
   };
 
-  // Safe localStorage function with error handling
-  const safeSaveToStorage = (key: string, data: any): boolean => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-      return true;
-    } catch (error) {
-      console.warn('localStorage full, trying alternatives...');
-      
-      // Try clearing old prediction data first
-      localStorage.removeItem(key);
-      
-      try {
-        localStorage.setItem(key, JSON.stringify(data));
-        return true;
-      } catch (error2) {
-        // Fallback to sessionStorage
-        try {
-          sessionStorage.setItem(key, JSON.stringify(data));
-          return true;
-        } catch (error3) {
-          console.error('All storage methods failed, using memory storage');
-          // Store in window object as fallback
-          (window as any).predictionResult = data;
-          return true;
-        }
-      }
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
@@ -170,73 +141,17 @@ const DiseasePrediction: React.FC = () => {
       }
 
       if (response.ok && data.result) {
-        // Store only essential prediction data (no large image data)
+        // Store prediction data for the result page
         const predictionData = {
           result: data.result,
           confidence: data.confidence,
-          fileName: file.name,
-          timestamp: Date.now()
+          image: imagePreview
         };
 
-        // Use safe storage function
-        const storageSuccess = safeSaveToStorage('predictionResult', predictionData);
-        
-        if (!storageSuccess) {
-          console.warn('Failed to store prediction data');
-        }
+        // Save to localStorage instead of sessionStorage for better persistence
+        localStorage.setItem('predictionResult', JSON.stringify(predictionData));
 
-        // Store image separately if needed (with compression)
-        if (imagePreview) {
-          try {
-            // Try to store compressed image data
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            
-            img.onload = () => {
-              // Compress image to smaller size
-              const maxWidth = 300;
-              const maxHeight = 300;
-              
-              let { width, height } = img;
-              
-              if (width > height) {
-                if (width > maxWidth) {
-                  height *= maxWidth / width;
-                  width = maxWidth;
-                }
-              } else {
-                if (height > maxHeight) {
-                  width *= maxHeight / height;
-                  height = maxHeight;
-                }
-              }
-              
-              canvas.width = width;
-              canvas.height = height;
-              
-              ctx?.drawImage(img, 0, 0, width, height);
-              
-              // Convert to compressed base64
-              const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
-              
-              // Try to store compressed image
-              try {
-                localStorage.setItem('predictionImage', compressedImage);
-              } catch (err) {
-                console.warn('Could not store compressed image:', err);
-                // Store in memory as fallback
-                (window as any).predictionImage = compressedImage;
-              }
-            };
-            
-            img.src = imagePreview;
-          } catch (err) {
-            console.warn('Image compression failed:', err);
-          }
-        }
-
-        // Navigate to result page with only essential parameters
+        // Navigate to result page with only essential parameters (no image data)
         const params = new URLSearchParams({
           result: data.result,
           confidence: data.confidence.toString()
