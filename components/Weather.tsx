@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
+/* import { useEffect, useState } from 'react';
+import 'leaflet/dist/leaflet.css'; */
 import FullScreenLoader from './FullScreenLoader';
 
 export default function Weather() {
-  const [LeafletMap, setLeafletMap] = useState<JSX.Element | null>(null);
+  /* const [LeafletMap, setLeafletMap] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
     // Dynamically import Leaflet modules only on client
@@ -23,11 +23,11 @@ export default function Weather() {
       );
       setLeafletMap(map);
     });
-  }, []);
+  }, []); */
 
   return (
     <div>
-      {LeafletMap || <FullScreenLoader/>}
+      {<FullScreenLoader/>}
     </div>
   );
 }

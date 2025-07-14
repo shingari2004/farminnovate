@@ -23,7 +23,8 @@ const ProductsContainer = () => {
 
   const products = useQuery(api.listProducts.listProducts, {});
   const categories = useQuery(api.addCategory.getCategories);
-  const [selectedCategory, setSelectedCategory] = useState<Id<"categories"> | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<Id<"categories"> | null>(null);
 
   // For fade animation
   const [isFading, setIsFading] = useState(false);
@@ -49,7 +50,7 @@ const ProductsContainer = () => {
     return () => clearTimeout(timeout);
   }, [selectedCategory, page]);
 
-  if (!allProducts) return <FullScreenLoader/>;
+  if (!allProducts) return <FullScreenLoader />;
 
   const convexUserId = convexUser?._id;
 
@@ -108,20 +109,24 @@ const ProductsContainer = () => {
                     backgroundSize: "cover",
                   }}
                 >
-                  <Link href={`/marketPlace/${product.categoryId}/${product._id}`}>
+                  <Link
+                    href={`/marketPlace/${product.categoryId}/${product._id}`}
+                  >
                     {product.imageUrl && (
                       <img
-                        src=/* {product.imageUrl} */ '/icons/market/product1.png'
+                        src=/* {product.imageUrl} */ "/icons/market/product1.png"
                         alt={product.name}
                         className="relative top-15 w-40 h-40 object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     )}
                   </Link>
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out">
-                    <ProductsOptions
-                      userId={convexUserId}
-                      productId={product._id}
-                    />
+                    {convexUserId && (
+                      <ProductsOptions
+                        userId={convexUserId}
+                        productId={product._id}
+                      />
+                    )}
                   </div>
                 </div>
 
