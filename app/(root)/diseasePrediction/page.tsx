@@ -18,6 +18,9 @@ const DiseasePrediction: React.FC = () => {
   
   const router = useRouter();
 
+  // Updated with your actual Render deployment URL
+  const RENDER_API_URL = process.env.NEXT_PUBLIC_RENDER_API_URL || 'https://disease-detection-e8br.onrender.com';
+
   const handleFileChange = (selectedFile: File) => {
     setFile(selectedFile);
     setError(null);
@@ -64,6 +67,35 @@ const DiseasePrediction: React.FC = () => {
     }
   };
 
+  // Safe localStorage function with error handling
+  const safeSaveToStorage = (key: string, data: any): boolean => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.warn('localStorage full, trying alternatives...');
+      
+      // Try clearing old prediction data first
+      localStorage.removeItem(key);
+      
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+      } catch (error2) {
+        // Fallback to sessionStorage
+        try {
+          sessionStorage.setItem(key, JSON.stringify(data));
+          return true;
+        } catch (error3) {
+          console.error('All storage methods failed, using memory storage');
+          // Store in window object as fallback
+          (window as any).predictionResult = data;
+          return true;
+        }
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
@@ -85,9 +117,14 @@ const DiseasePrediction: React.FC = () => {
         type: file.type
       });
 
-      const response = await fetch('http://localhost:8080/predict', {
+      console.log('API URL:', `${RENDER_API_URL}/predict`);
+
+      const response = await fetch(`${RENDER_API_URL}/predict`, {
         method: 'POST',
         body: formData,
+        // Remove mode and credentials for initial testing
+        // mode: 'cors',
+        // credentials: 'include',
       });
 
       // Get response as text first to handle potential JSON parsing issues
@@ -102,7 +139,7 @@ const DiseasePrediction: React.FC = () => {
         data = JSON.parse(responseText);
       } catch (parseError) {
         // If JSON parsing fails, try to fix common issues
-        console.log(parseError);
+        console.log('JSON parsing error:', parseError);
         console.warn('JSON parsing failed, attempting to fix:', responseText);
         
         // Replace NaN with 0 or null
@@ -111,7 +148,7 @@ const DiseasePrediction: React.FC = () => {
         try {
           data = JSON.parse(fixedText);
         } catch (secondParseError) {
-          console.log(secondParseError);
+          console.log('Second parsing error:', secondParseError);
           console.error('Failed to parse response even after fixing:', fixedText);
           throw new Error(`Invalid response format from server: ${responseText}`);
         }
@@ -133,17 +170,73 @@ const DiseasePrediction: React.FC = () => {
       }
 
       if (response.ok && data.result) {
-        // Store prediction data for the result page
+        // Store only essential prediction data (no large image data)
         const predictionData = {
           result: data.result,
           confidence: data.confidence,
-          image: imagePreview
+          fileName: file.name,
+          timestamp: Date.now()
         };
 
-        // Save to sessionStorage
-        sessionStorage.setItem('predictionResult', JSON.stringify(predictionData));
+        // Use safe storage function
+        const storageSuccess = safeSaveToStorage('predictionResult', predictionData);
+        
+        if (!storageSuccess) {
+          console.warn('Failed to store prediction data');
+        }
 
-        // Navigate to result page with only essential parameters (no image data)
+        // Store image separately if needed (with compression)
+        if (imagePreview) {
+          try {
+            // Try to store compressed image data
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+              // Compress image to smaller size
+              const maxWidth = 300;
+              const maxHeight = 300;
+              
+              let { width, height } = img;
+              
+              if (width > height) {
+                if (width > maxWidth) {
+                  height *= maxWidth / width;
+                  width = maxWidth;
+                }
+              } else {
+                if (height > maxHeight) {
+                  width *= maxHeight / height;
+                  height = maxHeight;
+                }
+              }
+              
+              canvas.width = width;
+              canvas.height = height;
+              
+              ctx?.drawImage(img, 0, 0, width, height);
+              
+              // Convert to compressed base64
+              const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
+              
+              // Try to store compressed image
+              try {
+                localStorage.setItem('predictionImage', compressedImage);
+              } catch (err) {
+                console.warn('Could not store compressed image:', err);
+                // Store in memory as fallback
+                (window as any).predictionImage = compressedImage;
+              }
+            };
+            
+            img.src = imagePreview;
+          } catch (err) {
+            console.warn('Image compression failed:', err);
+          }
+        }
+
+        // Navigate to result page with only essential parameters
         const params = new URLSearchParams({
           result: data.result,
           confidence: data.confidence.toString()
@@ -156,7 +249,14 @@ const DiseasePrediction: React.FC = () => {
     } catch (error) {
       console.error('Error making prediction:', error);
       if (error instanceof Error) {
-        setError(`Error: ${error.message}`);
+        // Handle common network errors
+        if (error.message.includes('fetch')) {
+          setError('Network error. Please check if your ML service is running and accessible.');
+        } else if (error.message.includes('Failed to fetch')) {
+          setError('Connection failed. This might be due to CORS issues or the API being unavailable.');
+        } else {
+          setError(`Error: ${error.message}`);
+        }
       } else {
         setError('Network error. Please check your connection and try again.');
       }
