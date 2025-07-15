@@ -9,105 +9,113 @@ interface NewsArticle {
   publishedAt: string;
 }
 
+interface RSSItem {
+  title: string;
+  description: string;
+  link: string;
+  thumbnail?: string;
+  pubDate: string;
+}
+
+interface RSS2JsonResponse {
+  status: string;
+  items: RSSItem[];
+}
+
 export async function GET(request: NextRequest) {
-   console.log(request.url);
+  console.log(request.url);
   try {
-    // Using free RSS feed from Agriculture.com
-    const response = await fetch(
-      'https://www.agriculture.com/rss/news-articles',
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; NewsApp/1.0)',
-        },
-      }
-    );
+    // Using a more reliable RSS feed approach
+    // You can also use RSS-to-JSON services like rss2json.com
+    const rssToJsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.agriculture.com/rss';
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const response = await fetch(rssToJsonUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; NewsApp/1.0)',
+      },
+    });
     
-    const rssText = await response.text();
-    
-    // Parse RSS feed (basic parsing)
-    const items: NewsArticle[] = [];
-    // Fixed: Use [\s\S] instead of . with s flag to match any character including newlines
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/;
-    const descRegex = /<description><!\[CDATA\[(.*?)\]\]><\/description>/;
-    const linkRegex = /<link>(.*?)<\/link>/;
-    const imageRegex = /<media:content[^>]*url="([^"]*)"[^>]*>/;
-    
-    let match;
-    while ((match = itemRegex.exec(rssText)) !== null && items.length < 10) {
-      const itemContent = match[1];
+    if (response.ok) {
+      const data: RSS2JsonResponse = await response.json();
       
-      const titleMatch = titleRegex.exec(itemContent);
-      const descMatch = descRegex.exec(itemContent);
-      const linkMatch = linkRegex.exec(itemContent);
-      const imageMatch = imageRegex.exec(itemContent);
-      
-      if (titleMatch && descMatch && linkMatch) {
-        items.push({
-          title: titleMatch[1],
-          description: descMatch[1].replace(/<[^>]*>/g, ''), // Remove HTML tags
-          url: linkMatch[1],
-          urlToImage: imageMatch ? imageMatch[1] : 'https://via.placeholder.com/400x400?text=Agriculture+News',
-          publishedAt: new Date().toISOString(),
+      if (data.status === 'ok' && data.items) {
+        const articles: NewsArticle[] = data.items.slice(0, 10).map((item: RSSItem) => ({
+          title: item.title || 'No title available',
+          description: item.description ? item.description.replace(/<[^>]*>/g, '') : 'No description available',
+          url: item.link || '#',
+          urlToImage: item.thumbnail || 'https://via.placeholder.com/400x400?text=Agriculture+News',
+          publishedAt: item.pubDate || new Date().toISOString(),
+        }));
+        
+        return NextResponse.json({
+          status: 'ok',
+          articles: articles,
+          totalResults: articles.length
         });
       }
     }
     
-    return NextResponse.json({
-      status: 'ok',
-      articles: items,
-      totalResults: items.length
-    });
+    throw new Error('RSS feed failed to load');
   } catch (error) {
     console.error('Error fetching news:', error);
     
-    // Fallback to mock data if RSS fails
+    // Enhanced fallback with more realistic mock data
     const mockArticles: NewsArticle[] = [
       {
-        title: "India's Agricultural Modernization Continues",
-        description: "Government initiatives are driving technological advancement in Indian agriculture, with new programs supporting farmers across the country.",
+        title: "India's Agricultural Modernization Continues with Digital Farming",
+        description: "Government initiatives are driving technological advancement in Indian agriculture, with new programs supporting farmers across Punjab, Haryana, and other key agricultural states. Digital farming tools are being implemented to improve crop monitoring and yield prediction.",
         url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Agriculture+News",
-        publishedAt: new Date().toISOString(),
+        urlToImage: "https://via.placeholder.com/400x400?text=Digital+Farming",
+        publishedAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
       },
       {
-        title: "Sustainable Farming Practices Gain Momentum",
-        description: "Farmers are increasingly adopting sustainable and eco-friendly farming methods to improve crop yields while protecting the environment.",
+        title: "Sustainable Farming Practices Gain Momentum in North India",
+        description: "Farmers in Punjab and surrounding regions are increasingly adopting sustainable and eco-friendly farming methods to improve crop yields while protecting the environment. Organic farming practices are showing promising results.",
         url: "#",
         urlToImage: "https://via.placeholder.com/400x400?text=Sustainable+Farming",
-        publishedAt: new Date().toISOString(),
+        publishedAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
       },
       {
-        title: "Technology in Agriculture: A Growing Trend",
-        description: "Digital tools and modern technology are transforming how farmers manage their crops and livestock, leading to better productivity.",
+        title: "Technology in Agriculture: AI and IoT Transform Farming",
+        description: "Artificial Intelligence and Internet of Things devices are transforming how farmers manage their crops and livestock. Smart irrigation systems and drone monitoring are leading to better productivity and resource management.",
         url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=AgTech",
-        publishedAt: new Date().toISOString(),
+        urlToImage: "https://via.placeholder.com/400x400?text=AgTech+AI",
+        publishedAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
       },
       {
-        title: "Weather Patterns Affecting Crop Production",
-        description: "Climate changes and weather patterns continue to impact agricultural production, with farmers adapting to new challenges.",
+        title: "Monsoon Patterns Affecting Crop Production Across India",
+        description: "Climate changes and irregular monsoon patterns continue to impact agricultural production, with farmers in Punjab and other northern states adapting to new challenges. Weather forecasting tools are becoming essential for crop planning.",
         url: "#",
         urlToImage: "https://via.placeholder.com/400x400?text=Weather+Agriculture",
-        publishedAt: new Date().toISOString(),
+        publishedAt: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
       },
       {
-        title: "Government Support for Rural Development",
-        description: "New policies and programs are being implemented to support rural communities and improve agricultural infrastructure.",
+        title: "Government Support for Rural Development and Farmer Welfare",
+        description: "New policies and programs are being implemented to support rural communities and improve agricultural infrastructure. Subsidies for modern farming equipment and training programs are being expanded nationwide.",
         url: "#",
         urlToImage: "https://via.placeholder.com/400x400?text=Rural+Development",
-        publishedAt: new Date().toISOString(),
+        publishedAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
       },
       {
-        title: "Organic Farming Market Growth",
-        description: "The organic farming sector is experiencing significant growth as consumers demand more sustainable and healthy food options.",
+        title: "Organic Farming Market Growth Drives Agricultural Innovation",
+        description: "The organic farming sector is experiencing significant growth as consumers demand more sustainable and healthy food options. Export opportunities for organic produce are creating new income streams for farmers.",
         url: "#",
         urlToImage: "https://via.placeholder.com/400x400?text=Organic+Farming",
-        publishedAt: new Date().toISOString(),
+        publishedAt: new Date(Date.now() - 518400000).toISOString(), // 6 days ago
+      },
+      {
+        title: "Water Conservation Techniques in Modern Agriculture",
+        description: "Innovative water conservation methods including drip irrigation and rainwater harvesting are being adopted by farmers to combat water scarcity. These techniques are proving especially effective in water-stressed regions.",
+        url: "#",
+        urlToImage: "https://via.placeholder.com/400x400?text=Water+Conservation",
+        publishedAt: new Date(Date.now() - 604800000).toISOString(), // 7 days ago
+      },
+      {
+        title: "Crop Insurance Schemes Provide Security for Farmers",
+        description: "Government-backed crop insurance programs are helping farmers mitigate risks from natural disasters and climate change. These schemes are particularly beneficial for small-scale farmers in rural areas.",
+        url: "#",
+        urlToImage: "https://via.placeholder.com/400x400?text=Crop+Insurance",
+        publishedAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
       }
     ];
     

@@ -1,140 +1,186 @@
-// app/api/news/route.ts (For Next.js 13+ App Router)
-import { NextRequest, NextResponse } from 'next/server';
+"use client";
 
-interface NewsArticle {
+import React, { useEffect, useState } from "react";
+import FullScreenLoader from "./FullScreenLoader";
+
+interface NewsItem {
+  id: string | number;
   title: string;
   description: string;
+  imageUrl: string;
   url: string;
-  urlToImage: string;
-  publishedAt: string;
 }
 
-interface RSSItem {
-  title: string;
-  description: string;
-  link: string;
-  thumbnail?: string;
-  pubDate: string;
+interface Article {
+  title?: string;
+  description?: string;
+  urlToImage?: string;
+  url?: string;
 }
 
-interface RSS2JsonResponse {
-  status: string;
-  items: RSSItem[];
-}
+const NewsSlider = () => {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [current, setCurrent] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export async function GET(request: NextRequest) {
-   console.log(request.url);
-  try {
-    // Using a more reliable RSS feed approach
-    // You can also use RSS-to-JSON services like rss2json.com
-    const rssToJsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.agriculture.com/rss';
-    
-    const response = await fetch(rssToJsonUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; NewsApp/1.0)',
-      },
-    });
-    
-    if (response.ok) {
-      const data: RSS2JsonResponse = await response.json();
-      
-      if (data.status === 'ok' && data.items) {
-        const articles: NewsArticle[] = data.items.slice(0, 10).map((item: RSSItem) => ({
-          title: item.title || 'No title available',
-          description: item.description ? item.description.replace(/<[^>]*>/g, '') : 'No description available',
-          url: item.link || '#',
-          urlToImage: item.thumbnail || 'https://via.placeholder.com/400x400?text=Agriculture+News',
-          publishedAt: item.pubDate || new Date().toISOString(),
-        }));
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setError(null);
         
-        return NextResponse.json({
-          status: 'ok',
-          articles: articles,
-          totalResults: articles.length
-        });
-      }
-    }
-    
-    throw new Error('RSS feed failed to load');
-  } catch (error) {
-    console.error('Error fetching news:', error);
-    
-    // Enhanced fallback with more realistic mock data
-    const mockArticles: NewsArticle[] = [
-      {
-        title: "India's Agricultural Modernization Continues with Digital Farming",
-        description: "Government initiatives are driving technological advancement in Indian agriculture, with new programs supporting farmers across Punjab, Haryana, and other key agricultural states. Digital farming tools are being implemented to improve crop monitoring and yield prediction.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Digital+Farming",
-        publishedAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-      },
-      {
-        title: "Sustainable Farming Practices Gain Momentum in North India",
-        description: "Farmers in Punjab and surrounding regions are increasingly adopting sustainable and eco-friendly farming methods to improve crop yields while protecting the environment. Organic farming practices are showing promising results.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Sustainable+Farming",
-        publishedAt: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-      },
-      {
-        title: "Technology in Agriculture: AI and IoT Transform Farming",
-        description: "Artificial Intelligence and Internet of Things devices are transforming how farmers manage their crops and livestock. Smart irrigation systems and drone monitoring are leading to better productivity and resource management.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=AgTech+AI",
-        publishedAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-      },
-      {
-        title: "Monsoon Patterns Affecting Crop Production Across India",
-        description: "Climate changes and irregular monsoon patterns continue to impact agricultural production, with farmers in Punjab and other northern states adapting to new challenges. Weather forecasting tools are becoming essential for crop planning.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Weather+Agriculture",
-        publishedAt: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
-      },
-      {
-        title: "Government Support for Rural Development and Farmer Welfare",
-        description: "New policies and programs are being implemented to support rural communities and improve agricultural infrastructure. Subsidies for modern farming equipment and training programs are being expanded nationwide.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Rural+Development",
-        publishedAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
-      },
-      {
-        title: "Organic Farming Market Growth Drives Agricultural Innovation",
-        description: "The organic farming sector is experiencing significant growth as consumers demand more sustainable and healthy food options. Export opportunities for organic produce are creating new income streams for farmers.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Organic+Farming",
-        publishedAt: new Date(Date.now() - 518400000).toISOString(), // 6 days ago
-      },
-      {
-        title: "Water Conservation Techniques in Modern Agriculture",
-        description: "Innovative water conservation methods including drip irrigation and rainwater harvesting are being adopted by farmers to combat water scarcity. These techniques are proving especially effective in water-stressed regions.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Water+Conservation",
-        publishedAt: new Date(Date.now() - 604800000).toISOString(), // 7 days ago
-      },
-      {
-        title: "Crop Insurance Schemes Provide Security for Farmers",
-        description: "Government-backed crop insurance programs are helping farmers mitigate risks from natural disasters and climate change. These schemes are particularly beneficial for small-scale farmers in rural areas.",
-        url: "#",
-        urlToImage: "https://via.placeholder.com/400x400?text=Crop+Insurance",
-        publishedAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
-      }
-    ];
-    
-    return NextResponse.json({
-      status: 'ok',
-      articles: mockArticles,
-      totalResults: mockArticles.length
-    });
-  }
-}
+        // Call your Vercel API route instead of direct NewsAPI call
+        const res = await fetch('/api/news');
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
 
-export async function OPTIONS(request: NextRequest) {
-  console.log(request.url);
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-}
+        // Check if articles exist and is an array
+        if (!data.articles || !Array.isArray(data.articles)) {
+          throw new Error('No articles found in response');
+        }
+
+        if (data.articles.length === 0) {
+          throw new Error('No articles available');
+        }
+
+        // Map your API data structure here
+        const shuffledArticles = data.articles.sort(() => 0.5 - Math.random()); 
+
+        // Select the first 6 articles
+        const selectedArticles = shuffledArticles
+          .slice(0, 6)
+          .map((article: Article, i: number) => ({
+            id: i,
+            title: article.title || "No title",
+            description: article.description || "No description",
+            imageUrl:
+              article.urlToImage ||
+              "https://via.placeholder.com/400x400?text=No+Image",
+            url: article.url || "#",
+          }));
+
+        setNews(selectedArticles);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching news:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch news");
+        setLoading(false);
+      }
+    };
+
+    // Initial fetch
+    fetchNews();
+    
+    // Set interval for periodic updates
+    const newsInterval = setInterval(fetchNews, 30000); // 30 seconds
+
+    // Cleanup function
+    return () => {
+      clearInterval(newsInterval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (news.length === 0) return;
+
+    const slideInterval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % news.length);
+    }, 5000);
+
+    return () => clearInterval(slideInterval);
+  }, [news]);
+
+  if (loading) {
+    return <FullScreenLoader />;
+  }
+
+  if (error) {
+    return (
+      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading News</h2>
+          <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (news.length === 0) {
+    return (
+      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-600 mb-4">No News Available</h2>
+          <p className="text-gray-500">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg">
+      {news.map((slide, index) => (
+        <div
+          key={slide.id}
+          className={`
+            absolute inset-0 flex
+            transition-opacity duration-700
+            ${index === current ? "opacity-100 z-10" : "opacity-0 z-0"}
+          `}
+        >
+          {/* Left side content */}
+          <div className="w-1/2 bg-white p-12 flex flex-col justify-between">
+            <div>
+              <h1 className="text-xl font-bold pb-6 line-clamp-3">{slide.title}</h1>
+              <p className="pb-8 line-clamp-4 text-gray-700">{slide.description}</p>
+            </div>
+            <div>
+              <a
+                href={slide.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-32 h-12 rounded-3xl bg-amber-700 text-white items-center justify-center hover:bg-amber-800 transition"
+              >
+                Read full news
+              </a>
+            </div>
+          </div>
+
+          {/* Right side image */}
+          <div
+            className="w-1/2 bg-cover bg-center bg-gray-200"
+            style={{ backgroundImage: `url(${slide.imageUrl})` }}
+          />
+        </div>
+      ))}
+
+      {/* Navigation dots */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {news.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`w-3 h-3 rounded-full transition-colors ${
+              index === current ? "bg-amber-700" : "bg-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default NewsSlider;
