@@ -42,6 +42,15 @@ const NewsSlider = () => {
           throw new Error(data.error);
         }
 
+        // Check if articles exist and is an array
+        if (!data.articles || !Array.isArray(data.articles)) {
+          throw new Error('No articles found in response');
+        }
+
+        if (data.articles.length === 0) {
+          throw new Error('No articles available');
+        }
+
         // Map your API data structure here
         const shuffledArticles = data.articles.sort(() => 0.5 - Math.random()); 
 

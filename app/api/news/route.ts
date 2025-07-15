@@ -1,3 +1,4 @@
+// app/api/news/route.ts (For Next.js 13+ App Router)
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -23,6 +24,20 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
+    
+    // Check if NewsAPI returned an error
+    if (data.status === 'error') {
+      throw new Error(data.message || 'NewsAPI error');
+    }
+    
+    // Check if articles exist
+    if (!data.articles || !Array.isArray(data.articles)) {
+      return NextResponse.json({
+        status: 'ok',
+        articles: [],
+        totalResults: 0
+      });
+    }
     
     // Filter out articles with missing data
     const filteredArticles = data.articles.filter((article: any) => 
