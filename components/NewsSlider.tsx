@@ -21,20 +21,31 @@ interface Article {
 const NewsSlider = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [current, setCurrent] = useState(0);
-  const API_KEY_2 = "fed7e829a4b540afb735ad68e862aa47"; // Replace with your NewsAPI key
-  // Fetch and update live agriculture news
-  const NEWS_API_URL = `https://newsapi.org/v2/everything?q=agriculture+india&apiKey=${API_KEY_2}`;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const res = await fetch(NEWS_API_URL);
+        setError(null);
+        
+        // Call your Vercel API route instead of direct NewsAPI call
+        const res = await fetch('/api/news');
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
 
-        // Map your API data structure here (example for NewsAPI.org)
+        // Map your API data structure here
         const shuffledArticles = data.articles.sort(() => 0.5 - Math.random()); 
 
-        // Select the first 4 articles
+        // Select the first 6 articles
         const selectedArticles = shuffledArticles
           .slice(0, 6)
           .map((article: Article, i: number) => ({
@@ -48,27 +59,66 @@ const NewsSlider = () => {
           }));
 
         setNews(selectedArticles);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching news:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch news");
+        setLoading(false);
       }
     };
 
+    // Initial fetch
     fetchNews();
-    setInterval(fetchNews , 30000);
+    
+    // Set interval for periodic updates
+    const newsInterval = setInterval(fetchNews, 30000); // 30 seconds
+
+    // Cleanup function
+    return () => {
+      clearInterval(newsInterval);
+    };
   }, []);
 
   useEffect(() => {
     if (news.length === 0) return;
 
-    const interval = setInterval(() => {
+    const slideInterval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % news.length);
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(slideInterval);
   }, [news]);
 
+  if (loading) {
+    return <FullScreenLoader />;
+  }
+
+  if (error) {
+    return (
+      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading News</h2>
+          <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (news.length === 0) {
-    return <FullScreenLoader/>;
+    return (
+      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-600 mb-4">No News Available</h2>
+          <p className="text-gray-500">Please try again later.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -83,10 +133,10 @@ const NewsSlider = () => {
           `}
         >
           {/* Left side content */}
-          <div className="w-1/2 bg-white  p-12 flex flex-col justify-between">
+          <div className="w-1/2 bg-white p-12 flex flex-col justify-between">
             <div>
-              <h1 className="text-xl font-bold pb-6">{slide.title}</h1>
-              <p className="pb-8">{slide.description}</p>
+              <h1 className="text-xl font-bold pb-6 line-clamp-3">{slide.title}</h1>
+              <p className="pb-8 line-clamp-4 text-gray-700">{slide.description}</p>
             </div>
             <div>
               <a
@@ -102,11 +152,24 @@ const NewsSlider = () => {
 
           {/* Right side image */}
           <div
-            className="w-1/2 bg-cover bg-center"
+            className="w-1/2 bg-cover bg-center bg-gray-200"
             style={{ backgroundImage: `url(${slide.imageUrl})` }}
           />
         </div>
       ))}
+
+      {/* Navigation dots */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {news.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`w-3 h-3 rounded-full transition-colors ${
+              index === current ? "bg-amber-700" : "bg-gray-300"
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 };
