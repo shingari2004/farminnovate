@@ -10,12 +10,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `https://newsapi.org/v2/everything?q=agriculture+india&apiKey=${API_KEY}`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; NewsApp/1.0)',
-        },
-      }
+      `https://newsapi.org/v2/everything?q=agriculture+india&apiKey=${API_KEY}`
     );
     
     if (!response.ok) {
