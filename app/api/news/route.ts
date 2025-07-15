@@ -1,8 +1,16 @@
 // app/api/news/route.ts (For Next.js 13+ App Router)
 import { NextRequest, NextResponse } from 'next/server';
 
+interface NewsArticle {
+  title: string;
+  description: string;
+  url: string;
+  urlToImage: string;
+  publishedAt: string;
+}
+
 export async function GET(request: NextRequest) {
-  console.log(request.url); // Log the request URL for debugging
+   console.log(request.url);
   try {
     // Using free RSS feed from Agriculture.com
     const response = await fetch(
@@ -21,8 +29,9 @@ export async function GET(request: NextRequest) {
     const rssText = await response.text();
     
     // Parse RSS feed (basic parsing)
-    const items: any[] = [];
-    const itemRegex = /<item>(.*?)<\/item>/gs;
+    const items: NewsArticle[] = [];
+    // Fixed: Use [\s\S] instead of . with s flag to match any character including newlines
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/;
     const descRegex = /<description><!\[CDATA\[(.*?)\]\]><\/description>/;
     const linkRegex = /<link>(.*?)<\/link>/;
@@ -57,7 +66,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching news:', error);
     
     // Fallback to mock data if RSS fails
-    const mockArticles = [
+    const mockArticles: NewsArticle[] = [
       {
         title: "India's Agricultural Modernization Continues",
         description: "Government initiatives are driving technological advancement in Indian agriculture, with new programs supporting farmers across the country.",
