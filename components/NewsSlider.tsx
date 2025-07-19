@@ -242,13 +242,6 @@ const NewsSlider = () => {
           />
         ))}
       </div>
-
-      {/* Autoplay indicator */}
-      {isAutoPlaying && (
-        <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-          Auto-playing
-        </div>
-      )}
     </div>
   );
 };
