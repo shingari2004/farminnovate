@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch agriculture-related news
     const response = await fetch(
-      `https://newsapi.org/v2/top-headlines?country=ind&category=agriculture&apiKey=77702fe2be824ef3b1161da6f4b9ea2d`,
+      `https://newsapi.org/v2/top-headlines?country=us&category=agriculture&apiKey=fed7e829a4b540afb735ad68e862aa47`,
       {
         headers: {
           'User-Agent': 'Agriculture-News-App/1.0',
