@@ -16,8 +16,7 @@ const LeftImagePortion: React.FC = () => {
             />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">FARMTECH</h1>
-            <p className="text-sm text-gray-300">Innovators</p>
+            <h1 className="text-xl font-bold text-white">FARMINNOVATE</h1>
           </div>
         </div>
         <Image
