@@ -10,7 +10,7 @@ const manrope = Manrope({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "FARMINNOVATE",
-  description: "Generate your podcasts using AI",
+  description: "A farmer's Portal",
   icons: {
     icon: "/icons/logo1.png",
   },
