@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "FARMINNOVATE",
   description: "Generate your podcasts using AI",
   icons: {
-    icon: "/icons/logo.svg",
+    icon: "/icons/logo1.png",
   },
 };
 

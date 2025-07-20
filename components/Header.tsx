@@ -28,14 +28,13 @@ export default function Header() {
           <div>
             <Image
               src="/icons/logo1.png"
-              alt="background"
-              width={40}
-              height={40}
+              alt="logo"
+              width={50}
+              height={50}
             />
           </div>
           <div>
-            <h1 className="text-xl font-bold">FARMTECH</h1>
-            <p className="text-sm ">Innovators</p>
+            <h1 className="text-xl font-bold">FARMINNOVATE</h1>
           </div>
         </div>
 

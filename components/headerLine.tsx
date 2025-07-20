@@ -140,7 +140,7 @@ const HeaderLine = () => {
 
       <div
         ref={underlineRef}
-        className="absolute top-14 h-1 bg-amber-400 transition-all duration-300"
+        className="absolute top-14.75 h-1 bg-amber-400 transition-all duration-300"
       />
     </nav>
   );
