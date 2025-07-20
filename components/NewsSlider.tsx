@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import FullScreenLoader from "./FullScreenLoader";
+import { UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 interface NewsItem {
   id: string | number;
@@ -19,40 +22,50 @@ interface Article {
 }
 
 const NewsSlider = () => {
+  const { isSignedIn } = useUser();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const router = useRouter();
+  const handleClick = () => {
+    if (isSignedIn) {
+      // If needed, you could toggle a menu here, or just rely on UserButton
+      <UserButton afterSignOutUrl="/home" />; // Optional: if wrapping logic required
+    } else {
+      router.push("/sign-in");
+    }
+  };
 
   const fetchNews = useCallback(async () => {
     try {
       setError(null);
-      
+
       // Call your Vercel API route instead of direct NewsAPI call
-      const res = await fetch('/api/news');
-      
+      const res = await fetch("/api/news");
+
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-      
+
       const data = await res.json();
-      
+
       if (data.error) {
         throw new Error(data.error);
       }
 
       // Check if articles exist and is an array
       if (!data.articles || !Array.isArray(data.articles)) {
-        throw new Error('No articles found in response');
+        throw new Error("No articles found in response");
       }
 
       if (data.articles.length === 0) {
-        throw new Error('No articles available');
+        throw new Error("No articles available");
       }
 
       // Map your API data structure here
-      const shuffledArticles = data.articles.sort(() => 0.5 - Math.random()); 
+      const shuffledArticles = data.articles.sort(() => 0.5 - Math.random());
 
       // Select the first 6 articles
       const selectedArticles = shuffledArticles
@@ -79,7 +92,7 @@ const NewsSlider = () => {
   useEffect(() => {
     // Initial fetch
     fetchNews();
-    
+
     // Set interval for periodic updates
     const newsInterval = setInterval(fetchNews, 30000); // 30 seconds
 
@@ -126,16 +139,19 @@ const NewsSlider = () => {
     return (
       <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading News</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button 
+          <h2 className="text-xl font-bold text-red-600 mb-4">
+            Sign in to See news
+          </h2>
+          <button
             onClick={() => {
               setLoading(true);
               fetchNews();
-            }} 
-            className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition"
+            }}
+            className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-300 cursor-pointer transition"
           >
-            Retry
+            <div onClick={handleClick}>
+              <span>Sign In</span>
+            </div>
           </button>
         </div>
       </div>
@@ -143,23 +159,7 @@ const NewsSlider = () => {
   }
 
   if (news.length === 0) {
-    return (
-      <div className="relative w-full max-w-5xl h-96 mx-auto border-2 overflow-hidden rounded-lg shadow-lg flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-600 mb-4">No News Available</h2>
-          <p className="text-gray-500">Please try again later.</p>
-          <button 
-            onClick={() => {
-              setLoading(true);
-              fetchNews();
-            }} 
-            className="mt-4 px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   return (
@@ -191,8 +191,18 @@ const NewsSlider = () => {
                 className="inline-flex items-center px-6 py-3 rounded-full bg-amber-700 text-white hover:bg-amber-800 transition-colors duration-200 text-sm font-medium"
               >
                 Read Full Story
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <svg
+                  className="w-4 h-4 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
                 </svg>
               </a>
             </div>
@@ -201,10 +211,10 @@ const NewsSlider = () => {
           {/* Right side image */}
           <div
             className="w-1/2 bg-cover bg-center bg-gray-200"
-            style={{ 
+            style={{
               backgroundImage: `url(${slide.imageUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}
           />
         </div>
@@ -215,8 +225,18 @@ const NewsSlider = () => {
         onClick={goToPrev}
         className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-opacity-70"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
 
@@ -224,8 +244,18 @@ const NewsSlider = () => {
         onClick={goToNext}
         className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-opacity-70"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </button>
 
@@ -236,7 +266,9 @@ const NewsSlider = () => {
             key={index}
             onClick={() => goToSlide(index)}
             className={`w-3 h-3 rounded-full transition-colors duration-200 ${
-              index === current ? "bg-amber-700" : "bg-gray-300 hover:bg-gray-400"
+              index === current
+                ? "bg-amber-700"
+                : "bg-gray-300 hover:bg-gray-400"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />

@@ -31,6 +31,9 @@ const ConvexClerkProvider = ({ children }: { children: ReactNode }) => (
       socialButtonsBlockButton: "shadow-none",
       card:"shadow-lg border border-gray-200" // Removes social button shadow
     },
+    layout: {
+      logoImageUrl: '/icons/logo1.png',  // <-- your icon path here
+    },
   }}>
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       {children}
