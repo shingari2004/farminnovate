@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import ConvexClerkProvider from "@/providers/convexClerkProvider";
 import HeaderWrapper from "@/components/HeaderWrapper";
+import FooterWrapper from "@/components/FooterWrapper";
 import 'leaflet/dist/leaflet.css';
 
 
@@ -27,6 +28,7 @@ export default function RootLayout({
           <body className={`${manrope.className}`}>
             <HeaderWrapper/>
             <main className="relative z-10">{children}</main>
+            <FooterWrapper />
         </body>
       </html>
     </ConvexClerkProvider>

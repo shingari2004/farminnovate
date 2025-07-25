@@ -6,6 +6,7 @@ export default function HomePage() {
   return (
     <main >
       <div className="relative z-10">
+        <div></div>
         <div >
           <Image src="/icons/homepage/home-bg.jpg" alt="background" width={1920} height={800}  />
         </div>
