@@ -37,26 +37,40 @@ export default function NewsSection() {
   return (
     <div
       ref={section1Ref}
-      className="relative w-full h-screen py-28"
+      className="relative w-full min-h-screen py-16 sm:py-20 md:py-24 lg:py-28 bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/icons/pattern.png')" }}
     >
-      <div className="relative mx-50">
+      {/* Container with responsive padding and max-width */}
+      <div className="relative px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 max-w-7xl mx-auto">
+        {/* Header Section */}
         <div
-          className={`relative top-12 opacity-0 transition-all duration-800 ease-in-out ${
-            active ? " opacity-100 -translate-y-15" : "translate-y-0"
+          className={`relative opacity-0 transition-all duration-800 ease-in-out mb-12  ${
+            active ? "opacity-100 -translate-y-4 sm:-translate-y-6 md:-translate-y-8 lg:-translate-y-15" : "translate-y-0"
           }`}
         >
-          <h2 className="flex justify-center text-5xl font-extrabold text-emerald-800 ">
+          {/* Main Title */}
+          <h2 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-emerald-800">
             <div className={myFont.className}>News Section</div>
           </h2>
-          <h2 className="flex justify-center text-3xl">
-            <span className="pb-4 mb-10">
+          
+          {/* Subtitle */}
+          <h2 className="text-center text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-gray-700 px-4 sm:px-6 md:px-8">
+            <span className="block">
               Agricultural news from all over the world
             </span>
           </h2>
         </div>
-        <NewsSlider />
+
+        {/* News Slider Container */}
+        <div className="relative w-full">
+          <div className="overflow-hidden">
+            <NewsSlider />
+          </div>
+        </div>
       </div>
+
+      {/* Mobile-specific background overlay for better readability */}
+      <div className="absolute inset-0 bg-white/5 sm:bg-transparent pointer-events-none" />
     </div>
   );
 }
