@@ -7,6 +7,15 @@ import HeaderLine from "./headerLine";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import {
+  Home,
+  Cloud,
+  Eye,
+  Users,
+  ShoppingCart,
+  Heart,
+  ShoppingBag,
+} from "lucide-react";
 
 export default function Header() {
   const { user, isSignedIn } = useUser();
@@ -77,12 +86,7 @@ export default function Header() {
         {/* Logo Section */}
         <div className="flex items-center space-x-2">
           <div>
-            <Image
-              src="/icons/logo1.png"
-              alt="logo"
-              width={40}
-              height={40}
-            />
+            <Image src="/icons/logo1.png" alt="logo" width={40} height={40} />
           </div>
           <div>
             <h1 className="text-lg font-bold">FARMINNOVATE</h1>
@@ -128,12 +132,7 @@ export default function Header() {
         {/* Logo Section */}
         <div className="flex items-center space-x-2">
           <div>
-            <Image
-              src="/icons/logo1.png"
-              alt="logo"
-              width={35}
-              height={35}
-            />
+            <Image src="/icons/logo1.png" alt="logo" width={35} height={35} />
           </div>
           <div>
             <h1 className="text-base font-bold">
@@ -187,25 +186,49 @@ export default function Header() {
           <div className="px-4 py-6 space-y-4">
             {/* Mobile HeaderLine equivalent - you can customize this based on your HeaderLine component */}
             <nav className="space-y-4">
-              <a href="/home" className="block text-gray-700 hover:text-gray-900 font-medium transition-colors">
-                HOME
+              <a
+                href="/home"
+                className="flex items-center space-x-2 focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <Home size={18} />
+                <span className="font-medium">HOME</span>
               </a>
-              <a href="/weatherPage" className="block text-gray-700 hover:text-gray-900 font-medium transition-colors">
-                WEATHER
+              <a
+                href="/weatherPage"
+                className="flex items-center space-x-2  focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <Cloud size={18} />
+                <span className="font-medium">WEATHER</span>
               </a>
-              <a href="/diseasePrediction" className="block text-gray-700 hover:text-gray-900 font-medium transition-colors">
-                DISEASE PREDICTION
+              <a
+                href="/diseasePrediction"
+                className="flex items-center space-x-2   focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <Eye size={18} />
+                <span className="font-medium">DISEASE DETECTION</span>
               </a>
-              <a href="/community" className="block text-gray-700 hover:text-gray-900 font-medium transition-colors">
-                COMMUNITY
+              <a
+                href="/community"
+                className="flex items-center space-x-2  focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <Users size={18} />
+                <span className="font-medium">COMMUNITY</span>
               </a>
-              <Link href="/marketPlace" className="block text-gray-700 hover:text-gray-900 font-medium transition-colors"/>
+              <Link
+                href="/marketPlace"
+                className="flex items-center space-x-2  focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <ShoppingCart size={18} />
+                <span className="font-medium">MARKETPLACE</span>
+              </Link>
             </nav>
-            
+
             {/* Additional mobile-specific actions can go here */}
             <div className="pt-4 border-t border-gray-200">
               <p className="text-sm text-gray-500">
-                {isSignedIn ? `Welcome, ${user.firstName}!` : 'Please sign in to continue'}
+                {isSignedIn
+                  ? `Welcome, ${user.firstName}!`
+                  : "Please sign in to continue"}
               </p>
             </div>
           </div>
