@@ -221,6 +221,20 @@ export default function Header() {
                 <ShoppingCart size={18} />
                 <span className="font-medium">MARKETPLACE</span>
               </Link>
+              <Link
+                href="/cart"
+                className="flex items-center space-x-2  focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <ShoppingBag size={18} />
+                <span className="font-medium">CART</span>
+              </Link>
+              <Link
+                href="/wishlist"
+                className="flex items-center space-x-2  focus:text-yellow-400 hover:text-yellow-400 transition-colors"
+              >
+                <Heart size={18} />
+                <span className="font-medium">WISHLIST</span>
+              </Link>
             </nav>
 
             {/* Additional mobile-specific actions can go here */}
