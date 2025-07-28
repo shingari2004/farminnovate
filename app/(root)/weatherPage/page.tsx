@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { loadingCityAtom, placeAtom } from "./atom";
 import { useAtom } from "jotai";
 import { useEffect } from "react";
+import FullScreenLoader from "@/components/FullScreenLoader";
 
 interface WeatherDetail {
   dt: number;
@@ -118,9 +119,7 @@ export default function Home() {
 
   if (isLoading)
     return (
-      <div className="flex items-center min-h-screen justify-center">
-        <p className="animate-bounce">Loading...</p>
-      </div>
+      <FullScreenLoader/>
     );
 
   if (error)
