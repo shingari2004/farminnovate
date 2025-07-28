@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { MdOutlineLocationOn, MdWbSunny } from "react-icons/md";
+import { MdOutlineLocationOn } from "react-icons/md";
 import { MdMyLocation } from "react-icons/md";
 import SearchBox from "./SearchBox";
 import { useState } from "react";
@@ -33,7 +33,7 @@ export default function Navbar({ location }: Props) {
           `https://api.openweathermap.org/data/2.5/find?q=${value}&appid=${API_KEY}`
         );
 
-        const suggestions = response.data.list.map((item: any) => item.name);
+        const suggestions = response.data.list.map((item: { name: string }) => item.name);
         setSuggestions(suggestions);
         setError("");
         setShowSuggestions(true);
