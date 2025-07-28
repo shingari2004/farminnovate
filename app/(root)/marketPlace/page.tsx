@@ -1,6 +1,7 @@
 import ContentSlider from "@/components/ImageSlider";
 import CategoryCarousel from "@/components/CategoryCarousel";
 import ProductsContainer from "@/components/ProductsContainer";
+import FooterWrapper from "@/components/FooterWrapper";
 
 const slides = [
   {
@@ -26,6 +27,7 @@ export default function ProductsPage() {
       <ContentSlider slides={slides} />
       <CategoryCarousel />
       <ProductsContainer />
+      <FooterWrapper />
     </div>
   );
 }

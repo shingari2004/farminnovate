@@ -3,9 +3,8 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import ConvexClerkProvider from "@/providers/convexClerkProvider";
 import HeaderWrapper from "@/components/HeaderWrapper";
-import FooterWrapper from "@/components/FooterWrapper";
+import QueryProvider from "@/providers/QueryProvider";
 import 'leaflet/dist/leaflet.css';
-
 
 const manrope = Manrope({ subsets: ["latin"] });
 
@@ -24,11 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <ConvexClerkProvider>
-        <html>
-          <body className={`${manrope.className}`}>
+      <html>
+        <body className={`${manrope.className}`}>
+          <QueryProvider>
             <HeaderWrapper/>
             <main className="relative z-10">{children}</main>
-            <FooterWrapper />
+          </QueryProvider>
         </body>
       </html>
     </ConvexClerkProvider>
